@@ -1,0 +1,29 @@
+# Temporary backup files
+*~
+tmp.jl
+
+# Apple special files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+Thumbs.db
+
+# Windows files
+desktop.ini
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
