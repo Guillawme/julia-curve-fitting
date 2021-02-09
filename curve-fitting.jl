@@ -26,48 +26,117 @@ begin
 end
 
 # ╔═╡ 412eedac-658a-11eb-2326-93e5bf3d1a2c
-md"# Non-linear curve fitting
+md"""
+# Fitting of equilibrium binding data
 
-This notebook plots a dataset (with error bars for datasets containing replicates) and performs non-linear curve fitting of a model to the data."
+This notebook plots an equilibrium binding dataset (with error bars, for datasets containing replicates) and performs non-linear curve fitting of a model to the data.
+
+The following reference explains very well the theory of equilibrium binding experiments, as well as many important practical considerations:
+
+> Jarmoskaite I, AlSadhan I, Vaidyanathan PP & Herschlag D (2020) How to measure and evaluate binding affinities. *eLife* **9**: e57264 <https://doi.org/10.7554/eLife.57264>
+"""
+
+# ╔═╡ 270cc0cc-660f-11eb-241e-b75746a39cc7
+md"""
+## Load data
+
+The data file must be in CSV format. The first row is assumed to contain column names. The first column is assumed to be the $X$ values, all other columns are assumed to be replicate $Y$ values that will be averaged (fitting will be done against the mean values, weighted by their standard deviations). In addition, there must not be any row with an $X = 0$ value (this would result in an error when attempting to plot with a logarithmic scale). I always perform two measurements at $X = 0$, and I always sort rows by descending $X$ values, so this notebook automatically skips the last two rows of the CSV file; adjust accordingly if you don't measure at $X = 0$ and want to keep all rows (see section [Data processing](#1884912a-6aeb-11eb-2b4a-d14d4a321dc5) below). The data does *not* need to be scaled such that $Y$ takes values between $0$ and $1$: the binding models can account for arbitrary minimum and maximum $Y$ values (see section [Model functions](#663a4cae-658a-11eb-382f-cf256c08c9d1) below). Scaling data will hide differences in signal change between datasets, so it should never be done "blindly"; always look at the raw data.
+
+Indicate below which data file to process:
+
+- if the path given is not absolute, it is assumed to be relative to the notebook file (wherever the notebook is located)
+- a list of files can be provided with one file path per line and separated by commas
+"""
+
+# ╔═╡ 14baf100-660f-11eb-1380-ebf4a860eed8
+dataFiles = [
+	"datasets/dataset_002.csv",
+	"datasets/dataset_004.csv"
+]
+
+# ╔═╡ 214acce6-6ae8-11eb-3abf-492e50140317
+md"""
+Your data should appear below shortly, check that it looks normal. In addition to the columns present in your CSV file, you should see three columns named `mean`, `std` and `measurement` (these values will be used for fitting and plotting).
+"""
+
+# ╔═╡ 5c5e0392-658a-11eb-35be-3d940d4504cb
+md"""
+## Visualizations
+
+Your data and fit should appear below shortly. Take a good look at the [data and fit](#3dd72c58-6b2c-11eb-210f-0b547bf38ebe), make sure you check the [residuals](#4f4000b4-6b2c-11eb-015f-d76a0adda0a0). Once you're happy with it, check the [numerical results](#be17b97e-663a-11eb-2158-a381c19ece3f).
+"""
+
+# ╔═╡ 3dd72c58-6b2c-11eb-210f-0b547bf38ebe
+md"""
+### Data and fit
+
+Select binding model:
+"""
+
+# ╔═╡ 3da83f72-6a11-11eb-1a74-49b66eb39c96
+@bind chosenModel PlutoUI.Radio(
+	[
+		"Hill" => :Hill,
+		"Hyperbolic" => :Hyperbolic,
+		"Quadratic" => :Quadratic
+	],
+	default = "Hill"
+)
+
+# ╔═╡ d15cba72-6aeb-11eb-2c80-65702b48e859
+md"""
+Show fit line with initial parameters?
+$@bind showInitialFit PlutoUI.CheckBox(default = false)
+"""
+
+# ╔═╡ 01b59d8a-6637-11eb-0da0-8d3e314e23af
+md"""
+For the quadratic model, indicate receptor concentration (the receptor is the binding partner kept at constant, low concentration across the titration series).
+Parameter $R_0 =$
+$@bind R0 PlutoUI.Slider(0.01:0.1:100.0, default = 5.0, show_value = true)
+"""
+
+# ╔═╡ 4f4000b4-6b2c-11eb-015f-d76a0adda0a0
+md"""
+### Residuals
+"""
+
+# ╔═╡ c50cf18c-6b11-11eb-07d3-0b8e332ec5bc
+md"""
+The fit residuals should follow a random normal distribution around $0$. If they show a systematic trend, it means the fit systematically deviates from your data, and therefore the model you chose might not be justified (but be careful when considering alternative models: introducing more free parameters will likely get the fit line closer to the data points, but this is not helpful if these additional parameters don't contribute to explaining the physical phenomenon being modeled). Another possibility is a problem with your data. The most common problems are:
+
+- the data does not cover the proper concentration range
+- the concentration of receptor is too high relative to the $K_D$
+
+In either case, your best option is to design a new experiment and collect new data.
+"""
+
+# ╔═╡ be17b97e-663a-11eb-2158-a381c19ece3f
+md"""
+## Numerical results
+
+"""
+
+# ╔═╡ 7e7a9dc4-6ae8-11eb-128d-83544f01b78b
+md"""
+## Code
+
+The code doing the actual work is in this section. Do not edit unless you know what you are doing.
+"""
+
+# ╔═╡ 512e3028-6ae9-11eb-31b4-1bc9fc66b322
+md"### Necessary packages and notebook setup"
 
 # ╔═╡ abc03f64-6a11-11eb-0319-ed7cea455cb5
 PlutoUI.TableOfContents()
 
-# ╔═╡ 227f554a-658a-11eb-0a12-41577ee98192
-md"## Load raw data and process into mean ± std"
+# ╔═╡ 1884912a-6aeb-11eb-2b4a-d14d4a321dc5
+md"### Data processing"
 
-# ╔═╡ 270cc0cc-660f-11eb-241e-b75746a39cc7
-md"Indicate which data file to process (path is relative to the notebook file):"
-
-# ╔═╡ 14baf100-660f-11eb-1380-ebf4a860eed8
-dataFile = "datasets/dataset_003.csv"
-# Try to also make it work with an array of several file names.
-# datasets/dataset_005.csv is a good one to plot with 003.
-
-# ╔═╡ 4233708c-6557-11eb-0581-4f79b924af56
-df = @chain dataFile begin
-	CSV.File(footerskip=2)
-	DataFrame()
-	transform(
-		# Rename column 1, so we can always call it by the
-		# same name regardless of its name in the input file.
-		1 => :concentration,
-		copycols = false
-	)
-	@aside cols = ncol(_)
-	transform(
-		# Calculate mean and stddev of replicates
-		# (all columns in input except first one).
-		AsTable(2:cols) => ByRow(mean) => :mean,
-		AsTable(2:cols) => ByRow(std) => :std
-	)
-	transform(
-		# Mean and stddev together define a measurement
-		# (this is only for plotting; fitting uses the two
-		# original columns separately).
-		[:mean, :std] => ByRow(measurement) => :measurement
-	)
-end
+# ╔═╡ 992c86a2-6b13-11eb-1e00-95bdff2736d0
+md"""
+The `loadData()` function loads one data file, computes the mean and standard deviation of replicates, defines measurements as mean ± std, and returns a DataFrame containing all the data.
+"""
 
 # ╔═╡ 1fe4d112-6a11-11eb-37a6-bf95fbe032b1
 function loadData(dataFile)
@@ -94,144 +163,174 @@ function loadData(dataFile)
 			[:mean, :std] => ByRow(measurement) => :measurement
 		)
 	end
-	return(df)
+	return df
 end
 
-# ╔═╡ 5c5e0392-658a-11eb-35be-3d940d4504cb
-md"## Visualizations"
+# ╔═╡ d904fd76-6af1-11eb-2352-837e03072137
+dfs = [ loadData(df) for df in dataFiles ]
 
-# ╔═╡ 32926cf2-6a11-11eb-00ca-cf2d31f26270
-md"Select binding model:"
+# ╔═╡ 8e105fae-6aec-11eb-1471-83aebb776241
+md"### Plotting"
 
-# ╔═╡ 3da83f72-6a11-11eb-1a74-49b66eb39c96
-@bind chosenModel PlutoUI.Radio(
-	[
-		"Hill" => :Hill,
-		"Hyperbolic" => :Hyperbolic,
-		"Quadratic" => :Quadratic
-	],
-	default = "Hill"
-)
+# ╔═╡ 97c5020c-6aec-11eb-024b-513b1e603d98
+md"The `initMainPlot()` function initializes a plot, the `plotOneDataset()` function plots one dataset (call it repeatedly to plot more datasets on the same axes)."
+
+# ╔═╡ caf4a4a2-6aec-11eb-2765-49d67afa47dd
+function initMainPlot()
+	plot(
+		xlabel = "Concentration",
+		ylabel = "Signal",
+		xscale = :log10,
+		legend = :topleft
+	)
+end
+
+# ╔═╡ fc194672-6aed-11eb-0a06-2d967ec094b1
+md"The `initResidualPlot()` function initializes a plot, the `plotOneResiduals()` function plots the fit residuals from one dataset (call it repeatedly to plot more datasets on the same axes)."
+
+# ╔═╡ 14db987c-6aee-11eb-06cf-a11987b98f1e
+function initResidualPlot()
+	plot(
+		xlabel = "Concentration",
+		ylabel = "Fit residual",
+		xscale = :log10,
+		legend = :topleft
+	)
+	hline!([0], label = nothing, color = :red)
+end
+
+# ╔═╡ 7f83b838-6a11-11eb-3652-bdff24f3473e
+function plotOneResiduals(plt, df, fit, filePath)
+	title = split(filePath, "/")[end]
+	scatter!(
+		plt,
+		df.concentration,
+		fit.resid,
+		label = "$title: $chosenModel fit residual"
+	)
+end
+
+# ╔═╡ 663a4cae-658a-11eb-382f-cf256c08c9d1
+md"### Model functions"
+
+# ╔═╡ 594e7534-6aeb-11eb-1254-3b92b71877ed
+md"#### Model selection"
+
+# ╔═╡ 32dce844-6aee-11eb-3cf2-3ba420d311d3
+md"""
+This dictionary maps radio button options (in section [Visualizations](#5c5e0392-658a-11eb-35be-3d940d4504cb) above) to their corresponding model function:
+"""
+
+# ╔═╡ a1f56b0a-6aeb-11eb-0a44-556fad58f368
+md"""
+The remaining cells in this section are only meant to check that the model selection buttons work. This first cell should return the name of the selected binding model (corresponding to the active radio button in section [Visualizations](#5c5e0392-658a-11eb-35be-3d940d4504cb) above):
+"""
 
 # ╔═╡ 5be2e5d2-6a11-11eb-1421-492f5af16f9c
 chosenModel
 
-# ╔═╡ 01b59d8a-6637-11eb-0da0-8d3e314e23af
-md"If using the quadratic model, indicate the receptor concentration (in an FP experiment, this is the concentration of fluorescently labeled probe)."
-
-# ╔═╡ 171fcd26-6637-11eb-0deb-3dac3dd858b4
-@bind R0 PlutoUI.Slider(0.1:0.1:20.0, default = 5.0, show_value = true)
-
-# ╔═╡ 7f83b838-6a11-11eb-3652-bdff24f3473e
-function residualPlot(df, fit)
-	# From a dataframe and a fit, plot residuals
-	plot(
-		title = dataFile,
-		xlabel = "Concentration",
-		ylabel = "Fit residual",
-		legend = :topleft
-	)
-	scatter!(
-		df.concentration,
-		fit.resid,
-		xscale = :log10,
-		label = "Hill fit"
-	)
-	hline!([0], label = nothing)
-end
-
-# ╔═╡ 663a4cae-658a-11eb-382f-cf256c08c9d1
-md"## Model functions"
+# ╔═╡ 58617378-6aee-11eb-23e8-c13d89b4c57f
+md"""
+This other cell should return the model function corresponding to the selected binding model (the active radio button in section [Visualizations](#5c5e0392-658a-11eb-35be-3d940d4504cb) above):
+"""
 
 # ╔═╡ 88d941e6-658a-11eb-08a2-0f021e5ae3a4
-md"""This is the Hill equation:
+md"""
+#### Hill model
+
+This is the [Hill equation](https://en.wikipedia.org/wiki/Hill_equation_(biochemistry)):
 
 $S = S_{min} + (S_{max} - S_{min}) \times \frac{L^h}{{K_D}^h + L^h}$
 
-In which $S$ is the measured signal at a given value of ligand concentration $L$, $S_{min}$ and $S_{max}$ are the minimum and maximum values the observed signal can take, respectively, $K_D$ is the equilibrium dissociation constant and $h$ is the Hill coefficient."""
+In which $S$ is the measured signal ($Y$ value) at a given value of ligand concentration $L$ ($X$ value), $S_{min}$ and $S_{max}$ are the minimum and maximum values the observed signal can take, respectively, $K_D$ is the equilibrium dissociation constant and $h$ is the Hill coefficient."""
 
 # ╔═╡ e9fc3d44-6559-11eb-2da7-314e8fc76ee9
 @. hill(conc, p) = p[1] + (p[2] - p[1]) * conc^p[4] / (p[3]^p[4] + conc^p[4])
 
 # ╔═╡ 9d1f24cc-6a0f-11eb-3b16-35f89aff5d4a
-md"The hyperbolic model is a special case, where $h = 1$:"
+md"""
+#### Hyperbolic model
+
+The hyperbolic equation is a special case of the Hill equation, in which $h = 1$:
+"""
 
 # ╔═╡ 78e664d0-6618-11eb-135b-5574bb05ddef
 @. hyperbolic(conc, p) = p[1] + (p[2] - p[1]) * conc / (p[3] + conc)
 
 # ╔═╡ b0b17206-6a0f-11eb-2f5e-5fc8fa06cd36
-md"""Unlike the Hill and hyperbolic models, the quadratic model does not make the approximation that the concentration of free ligand at equilibrium is equal to the total ligand concentration:
+md"""
+#### Quadratic model
+
+Unlike the Hill and hyperbolic models, the quadratic model does not make the approximation that the concentration of free ligand at equilibrium is equal to the total ligand concentration:
 
 $S = S_{min} + (S_{max} - S_{min}) \times \frac{(K_{D} + R_{tot} + L_{tot}) - \sqrt{(- K_{D} - R_{tot} - L_{tot})^2 - 4 \times R_{tot} \times L_{tot}}}{2 \times R_{tot}}$
 
-Symbols have the same meaning as in the previous equations, except here $L_{tot}$ is the total concentration of ligand, and the parameter $R_{tot}$ is the total concentration of receptor.
+Symbols have the same meaning as in the previous equations, except here $L_{tot}$ is the total concentration of ligand, not the concentration of free ligand at equilibrium. $R_{tot}$ is the total concentration of receptor.
 
-$R_{tot}$ could in principle be left as a free parameter to be determined by the fitting procedure, but in general it is known accurately enough from the experimental set up, and one should replicate the same experiment with different concentrations of receptor to check its effect on the results."""
+In principle, $R_{tot}$ could be left as a free parameter to be determined by the fitting procedure, but in general it is known accurately enough from the experimental set up, and one should replicate the same experiment with different concentrations of receptor to check its effect on the results. $R_{tot}$ should be set in the experiment to be smaller than $K_D$, ideally, or at least of the same order of magnitude than $K_D$. It might take a couple experiments to obtain an estimate of $K_D$ before one can determine an adequately small concentration of receptor at which to perform a definite experiment.
+"""
 
 # ╔═╡ 5694f1da-6636-11eb-0fed-9fee5c48b114
 @. quadratic(conc, p) = p[1] + (p[2] - p[1]) * ( (p[3] + R0 + conc) - sqrt((-(p[3] + R0 + conc)) ^ 2 - 4 * R0 * conc) ) / (2 * R0)
 
 # ╔═╡ 605f06ae-6a11-11eb-0b2f-eb81f6526829
-# Map radio button options to corresponding model functions
 bindingModels = Dict(
 	"Hill" => hill,
 	"Hyperbolic" => hyperbolic,
 	"Quadratic" => quadratic
 )
 
-# ╔═╡ 6668c49a-6a11-11eb-2abf-5feecaee8972
-# This returns the model function corresponding to the selected radio button
-bindingModels[chosenModel]
-
 # ╔═╡ 7c03fcbe-6a11-11eb-1b7b-cbad863156a6
-function mainPlot(df, fit, showInitialFit = false)
-	# From a dataframe and a fit, plot everything
-	scatter(
+function plotOneDataset(plt, df, fit, filePath, showInitial = false, initialValues = nothing)
+	title = split(filePath, "/")[end]
+	scatter!(
+		plt,
 		df.concentration,
 		df.measurement,
-		xscale = :log10,
-		label = "Data"
+		label = "$title: data"
 	)
-	if showInitialFit
+	if showInitial
 		plot!(
-		df.concentration,
-		bindingModels[chosenModel](df.concentration, fit.param),
-		label = "$chosenModel fit (converged)"
+			plt,
+			df.concentration,
+			bindingModels[chosenModel](df.concentration, initialValues),
+			label = "$title: $chosenModel fit (initial)",
+			color = :grey
 		)
 		plot!(
+			plt,
 			df.concentration,
-			bindingModels[chosenModel](df.concentration, modelParams[chosenModel]),
-			label = "$chosenModel fit (initial)"
+			bindingModels[chosenModel](df.concentration, fit.param),
+			label = "$title: $chosenModel fit (converged)",
+			color = :red
 		)
 	else
 		plot!(
-		df.concentration,
-		bindingModels[chosenModel](df.concentration, fit.param),
-		label = "$chosenModel fit"
-	)
+			plt,
+			df.concentration,
+			bindingModels[chosenModel](df.concentration, fit.param),
+			label = "$title: $chosenModel fit",
+			color = :red
+		)
 	end
-	plot!(
-		title = dataFile,
-		xlabel = "Concentration",
-		ylabel = "Signal",
-		legend = :topleft
-	)
 end
 
+# ╔═╡ 6668c49a-6a11-11eb-2abf-5feecaee8972
+bindingModels[chosenModel]
+
 # ╔═╡ 0f960a8a-6a0f-11eb-04e2-b543192f6354
-md"## Parameters and their initial values"
+md"### Parameters and their initial values"
 
 # ╔═╡ 2eb890a4-658c-11eb-1fc4-af645d74109d
-md"The following arrays store initial values for the model parameters (in this order): $S_{min}$, $S_{max}$, $K_D$ and $h$ (for the Hill model only).
+md"""
+The `findInitialValues()` function takes the measured data and returns an array containing initial values for the model parameters (in this order): $S_{min}$, $S_{max}$, $K_D$ and $h$ (for the Hill model only, so the function needs to know which model was selected).
 
-Initial values for $S_{min}$ and $S_{max}$ are simply taken as the minimal and maximal values found in the data. The initial estimate for $K_D$ is the concentration of the data point that has a signal closest to halfway between $S_{min}$ and $S_{max}$ (if the experiment was properly designed, this is a reasonable estimate and close enough to the true value for the fit to converge). The initial estimate of $h$ is $1.0$, meaning we assume no cooperativity."
+Initial values for $S_{min}$ and $S_{max}$ are simply taken as the minimal and maximal values found in the data. The initial estimate for $K_D$ is the concentration of the data point that has a signal closest to halfway between $S_{min}$ and $S_{max}$ (if the experiment was properly designed, this is a reasonable estimate and close enough to the true value for the fit to converge). The initial estimate of $h$ is $1.0$, meaning we assume no cooperativity.
+"""
 
 # ╔═╡ ca2d2f12-6a1a-11eb-13ca-1f93df2b8e4a
 function findInitialValues(df, model)
-	# Given a datasef, find initial values for the model parameters
-	
 	halfSignal = minimum(df.mean) + (maximum(df.mean) - minimum(df.mean)) / 2
-	
 	if model == "Hill"
 		params = [
 			minimum(df.mean),
@@ -248,92 +347,89 @@ function findInitialValues(df, model)
 	end
 end
 
+# ╔═╡ 9be41e32-6af0-11eb-0904-d1cf3c288cab
+md"Determine initial values of the selected model's parameters from the currently loaded datasets:"
+
 # ╔═╡ 67b538f6-6a1b-11eb-3004-2d89c2f941e8
-initialParams = findInitialValues(df, chosenModel)
+initialParams = [ findInitialValues(df, chosenModel) for df in dfs ]
 
 # ╔═╡ 213e8ffa-6a0f-11eb-357e-638146193c5d
-md"## Fitting"
+md"### Fitting"
 
-# ╔═╡ c91ec0aa-655a-11eb-1916-a70d97224aeb
-fit = curve_fit(bindingModels[chosenModel], df.concentration, df.mean, df.std, initialParams)
+# ╔═╡ babcb896-6af0-11eb-194a-15922bc2df83
+md"Perform fit of the selected model to the measurements' mean values, weighted by the measurements' standard deviations, and using initial values determined previously for the model parameters:"
 
-# ╔═╡ e27cb090-6558-11eb-0fae-178b14e7fa8c
+# ╔═╡ 47426056-6af2-11eb-17f8-6d27d35003ca
+fits = [ curve_fit(bindingModels[chosenModel], df.concentration, df.mean, df.std, initialValues) for (df, initialValues) in zip(dfs, initialParams) ]
+
+# ╔═╡ 264bf9ec-6af5-11eb-1ffd-79fb3466f596
 begin
-	scatter(
-		df.concentration,
-		df.measurement,
-		xscale = :log10,
-		label = "Data"
-	)
-	plot!(
-		df.concentration,
-		bindingModels[chosenModel](df.concentration, initialParams),
-		label = "$chosenModel fit (initial)"
-	)
-	plot!(
-		df.concentration,
-		bindingModels[chosenModel](df.concentration, fit.param),
-		label = "$chosenModel fit (converged)"
-	)
-	plot!(
-		title = dataFile,
-		xlabel = "Concentration",
-		ylabel = "Signal",
-		legend = :topleft
-	)
+	dataPlot = initMainPlot()
+	for (df, fit, title, initialVals) in zip(dfs, fits, dataFiles, initialParams)
+		plotOneDataset(dataPlot, df, fit, title, showInitialFit, initialVals)
+	end
+	dataPlot
 end
 
-# ╔═╡ a5f01744-655c-11eb-1248-23eaa89fcf09
+# ╔═╡ a951b5dc-6af7-11eb-2401-5d11a14e3067
 begin
-	plot(
-		title = dataFile,
-		xlabel = "Concentration",
-		ylabel = "Fit residual",
-		legend = :topleft
-	)
-	scatter!(
-		df.concentration,
-		fit.resid,
-		xscale = :log10,
-		label = "$chosenModel fit"
-	)
-	hline!([0], label = nothing, color = :red)
+	residualPlot = initResidualPlot()
+	for (df, fit, title) in zip(dfs, fits, dataFiles)
+		plotOneResiduals(residualPlot, df, fit, title)
+	end
+	residualPlot
 end
 
-# ╔═╡ be17b97e-663a-11eb-2158-a381c19ece3f
-md"""## Results
-
-- Kd = $(round(fit.param[3])) ± $(round(stderror(fit)[3]))"""
+# ╔═╡ 799680d0-6af1-11eb-321d-b7758a40f931
+md"Degrees of freedom:"
 
 # ╔═╡ 1f0384de-659b-11eb-043e-5b86fcdd36e6
-dof(fit)
+dof.(fits)
+
+# ╔═╡ 8643b03c-6af1-11eb-0aa7-67acee28d2c0
+md"Standard errors of best-fit parameters:"
 
 # ╔═╡ a74998b4-659c-11eb-354d-09ff62710b87
-stderror(fit)
+paramsStdErrors = stderror.(fits)
 
 # ╔═╡ Cell order:
 # ╟─412eedac-658a-11eb-2326-93e5bf3d1a2c
-# ╟─393b2f5e-6556-11eb-2119-cf7309ee7392
-# ╟─abc03f64-6a11-11eb-0319-ed7cea455cb5
-# ╟─227f554a-658a-11eb-0a12-41577ee98192
 # ╟─270cc0cc-660f-11eb-241e-b75746a39cc7
 # ╠═14baf100-660f-11eb-1380-ebf4a860eed8
-# ╟─4233708c-6557-11eb-0581-4f79b924af56
-# ╟─1fe4d112-6a11-11eb-37a6-bf95fbe032b1
+# ╟─214acce6-6ae8-11eb-3abf-492e50140317
+# ╟─d904fd76-6af1-11eb-2352-837e03072137
 # ╟─5c5e0392-658a-11eb-35be-3d940d4504cb
-# ╟─32926cf2-6a11-11eb-00ca-cf2d31f26270
+# ╟─3dd72c58-6b2c-11eb-210f-0b547bf38ebe
 # ╟─3da83f72-6a11-11eb-1a74-49b66eb39c96
-# ╟─5be2e5d2-6a11-11eb-1421-492f5af16f9c
-# ╟─605f06ae-6a11-11eb-0b2f-eb81f6526829
-# ╟─6668c49a-6a11-11eb-2abf-5feecaee8972
+# ╟─d15cba72-6aeb-11eb-2c80-65702b48e859
 # ╟─01b59d8a-6637-11eb-0da0-8d3e314e23af
-# ╟─171fcd26-6637-11eb-0deb-3dac3dd858b4
-# ╟─e27cb090-6558-11eb-0fae-178b14e7fa8c
-# ╟─7c03fcbe-6a11-11eb-1b7b-cbad863156a6
-# ╟─a5f01744-655c-11eb-1248-23eaa89fcf09
-# ╟─7f83b838-6a11-11eb-3652-bdff24f3473e
-# ╟─be17b97e-663a-11eb-2158-a381c19ece3f
+# ╟─264bf9ec-6af5-11eb-1ffd-79fb3466f596
+# ╟─4f4000b4-6b2c-11eb-015f-d76a0adda0a0
+# ╟─c50cf18c-6b11-11eb-07d3-0b8e332ec5bc
+# ╟─a951b5dc-6af7-11eb-2401-5d11a14e3067
+# ╠═be17b97e-663a-11eb-2158-a381c19ece3f
+# ╟─7e7a9dc4-6ae8-11eb-128d-83544f01b78b
+# ╟─512e3028-6ae9-11eb-31b4-1bc9fc66b322
+# ╠═393b2f5e-6556-11eb-2119-cf7309ee7392
+# ╠═abc03f64-6a11-11eb-0319-ed7cea455cb5
+# ╟─1884912a-6aeb-11eb-2b4a-d14d4a321dc5
+# ╟─992c86a2-6b13-11eb-1e00-95bdff2736d0
+# ╠═1fe4d112-6a11-11eb-37a6-bf95fbe032b1
+# ╟─8e105fae-6aec-11eb-1471-83aebb776241
+# ╟─97c5020c-6aec-11eb-024b-513b1e603d98
+# ╠═caf4a4a2-6aec-11eb-2765-49d67afa47dd
+# ╠═7c03fcbe-6a11-11eb-1b7b-cbad863156a6
+# ╟─fc194672-6aed-11eb-0a06-2d967ec094b1
+# ╠═14db987c-6aee-11eb-06cf-a11987b98f1e
+# ╠═7f83b838-6a11-11eb-3652-bdff24f3473e
 # ╟─663a4cae-658a-11eb-382f-cf256c08c9d1
+# ╟─594e7534-6aeb-11eb-1254-3b92b71877ed
+# ╟─32dce844-6aee-11eb-3cf2-3ba420d311d3
+# ╠═605f06ae-6a11-11eb-0b2f-eb81f6526829
+# ╟─a1f56b0a-6aeb-11eb-0a44-556fad58f368
+# ╠═5be2e5d2-6a11-11eb-1421-492f5af16f9c
+# ╟─58617378-6aee-11eb-23e8-c13d89b4c57f
+# ╠═6668c49a-6a11-11eb-2abf-5feecaee8972
 # ╟─88d941e6-658a-11eb-08a2-0f021e5ae3a4
 # ╠═e9fc3d44-6559-11eb-2da7-314e8fc76ee9
 # ╟─9d1f24cc-6a0f-11eb-3b16-35f89aff5d4a
@@ -343,8 +439,12 @@ stderror(fit)
 # ╟─0f960a8a-6a0f-11eb-04e2-b543192f6354
 # ╟─2eb890a4-658c-11eb-1fc4-af645d74109d
 # ╠═ca2d2f12-6a1a-11eb-13ca-1f93df2b8e4a
+# ╟─9be41e32-6af0-11eb-0904-d1cf3c288cab
 # ╠═67b538f6-6a1b-11eb-3004-2d89c2f941e8
 # ╟─213e8ffa-6a0f-11eb-357e-638146193c5d
-# ╠═c91ec0aa-655a-11eb-1916-a70d97224aeb
+# ╟─babcb896-6af0-11eb-194a-15922bc2df83
+# ╠═47426056-6af2-11eb-17f8-6d27d35003ca
+# ╟─799680d0-6af1-11eb-321d-b7758a40f931
 # ╠═1f0384de-659b-11eb-043e-5b86fcdd36e6
+# ╟─8643b03c-6af1-11eb-0aa7-67acee28d2c0
 # ╠═a74998b4-659c-11eb-354d-09ff62710b87
