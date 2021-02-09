@@ -2,6 +2,10 @@
 *~
 tmp.jl
 
+# Julia sysimage files
+*.so
+*.dylib
+
 # Apple special files
 .DS_Store
 .AppleDouble
