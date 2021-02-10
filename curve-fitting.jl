@@ -50,8 +50,8 @@ Indicate below which data file to process:
 
 # ╔═╡ 14baf100-660f-11eb-1380-ebf4a860eed8
 dataFiles = [
-	"datasets/dataset_002.csv",
-	"datasets/dataset_004.csv"
+	"datasets/dataset_003.csv",
+	"datasets/dataset_005.csv"
 ]
 
 # ╔═╡ 214acce6-6ae8-11eb-3abf-492e50140317
@@ -103,7 +103,7 @@ md"""
 
 # ╔═╡ c50cf18c-6b11-11eb-07d3-0b8e332ec5bc
 md"""
-The fit residuals should follow a random normal distribution around $0$. If they show a systematic trend, it means the fit systematically deviates from your data, and therefore the model you chose might not be justified (but be careful when considering alternative models: introducing more free parameters will likely get the fit line closer to the data points, but this is not helpful if these additional parameters don't contribute to explaining the physical phenomenon being modeled). Another possibility is a problem with your data. The most common problems are:
+The fit residuals should follow a random normal distribution around $0$. If they show a systematic trend, it means the fit systematically deviates from your data, and therefore the model you chose might not be justified (but be careful when considering alternative models: introducing more free parameters will likely get the fit line closer to the data points and yield a lower [sum of squared residuals](#124c4f94-6b99-11eb-2921-d7c2cd00b893), but this is not helpful if these additional parameters don't contribute to explaining the physical phenomenon being modeled). Another possibility is a problem with your data. The most common problems are:
 
 - the data does not cover the proper concentration range
 - the concentration of receptor is too high relative to the $K_D$
@@ -115,6 +115,12 @@ In either case, your best option is to design a new experiment and collect new d
 md"""
 ## Numerical results
 
+### Model parameters
+"""
+
+# ╔═╡ 124c4f94-6b99-11eb-2921-d7c2cd00b893
+md"""
+### Sum of squared residuals
 """
 
 # ╔═╡ 7e7a9dc4-6ae8-11eb-128d-83544f01b78b
@@ -380,17 +386,87 @@ begin
 	residualPlot
 end
 
+# ╔═╡ 2109f516-6b99-11eb-05a0-99b9ecfd0f9d
+PlutoUI.with_terminal() do
+	println("Dataset\t\t\t\tSum of squared residuals")
+	for (dataset, fit) in zip(dataFiles, fits)
+		println(
+			split(dataset, "/")[end],
+			"\t\t",
+			round(sum(fit.resid.^2), digits = 2)
+		)
+	end
+end
+
 # ╔═╡ 799680d0-6af1-11eb-321d-b7758a40f931
 md"Degrees of freedom:"
 
 # ╔═╡ 1f0384de-659b-11eb-043e-5b86fcdd36e6
 dof.(fits)
 
+# ╔═╡ 54501a10-6b9c-11eb-29de-77afc3772fb7
+md"Best fit parameters:"
+
+# ╔═╡ 5ed3ab64-6b9c-11eb-149e-43a1ef12ac7d
+coef.(fits)
+
 # ╔═╡ 8643b03c-6af1-11eb-0aa7-67acee28d2c0
 md"Standard errors of best-fit parameters:"
 
 # ╔═╡ a74998b4-659c-11eb-354d-09ff62710b87
 paramsStdErrors = stderror.(fits)
+
+# ╔═╡ 090347fc-6b8e-11eb-0e17-9d9d45749c0b
+PlutoUI.with_terminal() do
+	if length(initialParams[1]) == 3
+		# No Hill coefficient to report
+		println("Dataset\t\t\t\tKd\t\t\t\tSmin\t\t\tSmax")
+		for (dataset, fit, stderr) in zip(dataFiles, fits, paramsStdErrors)
+			println(
+				split(dataset, "/")[end],
+				"\t\t",
+				round(fit.param[3], digits = 1),
+				" ± ",
+				round(stderr[3], digits = 1),
+				"\t\t",
+				round(fit.param[1], digits = 1),
+				" ± ",
+				round(stderr[1], digits = 1),
+				"\t\t",
+				round(fit.param[2], digits = 1),
+				" ± ",
+				round(stderr[2], digits = 1)
+			)
+		end
+	elseif length(initialParams[1]) == 4
+		# There is a Hill coefficient to report
+		println("Dataset\t\t\t\tKd\t\t\t\tSmin\t\t\tSmax\t\t\th")
+		for (dataset, fit, stderr) in zip(dataFiles, fits, paramsStdErrors)
+			println(
+				split(dataset, "/")[end],
+				"\t\t",
+				round(fit.param[3], digits = 1),
+				" ± ",
+				round(stderr[3], digits = 1),
+				"\t\t",
+				round(fit.param[1], digits = 1),
+				" ± ",
+				round(stderr[1], digits = 1),
+				"\t\t",
+				round(fit.param[2], digits = 1),
+				" ± ",
+				round(stderr[2], digits = 1),
+				"\t\t",
+				round(fit.param[4], digits = 1),
+				" ± ",
+				round(stderr[4], digits = 1),
+			)
+		end
+	else
+		# Other number of values in  make no sense
+				println("Error.")
+	end
+end
 
 # ╔═╡ Cell order:
 # ╟─412eedac-658a-11eb-2326-93e5bf3d1a2c
@@ -407,7 +483,10 @@ paramsStdErrors = stderror.(fits)
 # ╟─4f4000b4-6b2c-11eb-015f-d76a0adda0a0
 # ╟─c50cf18c-6b11-11eb-07d3-0b8e332ec5bc
 # ╟─a951b5dc-6af7-11eb-2401-5d11a14e3067
-# ╠═be17b97e-663a-11eb-2158-a381c19ece3f
+# ╟─be17b97e-663a-11eb-2158-a381c19ece3f
+# ╟─090347fc-6b8e-11eb-0e17-9d9d45749c0b
+# ╟─124c4f94-6b99-11eb-2921-d7c2cd00b893
+# ╟─2109f516-6b99-11eb-05a0-99b9ecfd0f9d
 # ╟─7e7a9dc4-6ae8-11eb-128d-83544f01b78b
 # ╟─512e3028-6ae9-11eb-31b4-1bc9fc66b322
 # ╠═393b2f5e-6556-11eb-2119-cf7309ee7392
@@ -446,5 +525,7 @@ paramsStdErrors = stderror.(fits)
 # ╠═47426056-6af2-11eb-17f8-6d27d35003ca
 # ╟─799680d0-6af1-11eb-321d-b7758a40f931
 # ╠═1f0384de-659b-11eb-043e-5b86fcdd36e6
+# ╟─54501a10-6b9c-11eb-29de-77afc3772fb7
+# ╠═5ed3ab64-6b9c-11eb-149e-43a1ef12ac7d
 # ╟─8643b03c-6af1-11eb-0aa7-67acee28d2c0
 # ╠═a74998b4-659c-11eb-354d-09ff62710b87
