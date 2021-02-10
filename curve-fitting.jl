@@ -360,10 +360,31 @@ initialParams = [ findInitialValues(df, chosenModel) for df in dfs ]
 md"### Fitting"
 
 # ╔═╡ babcb896-6af0-11eb-194a-15922bc2df83
-md"Perform fit of the selected model to the measurements' mean values, weighted by the measurements' standard deviations, and using initial values determined previously for the model parameters:"
+md"Perform fit of the selected model to the measurements' mean values using initial values for the model parameters determined previously. If the dataset contains replicates, the fit will be weighted by the measurements' standard deviations."
 
 # ╔═╡ 47426056-6af2-11eb-17f8-6d27d35003ca
-fits = [ curve_fit(bindingModels[chosenModel], df.concentration, df.mean, df.std, initialValues) for (df, initialValues) in zip(dfs, initialParams) ]
+begin
+	fits = Vector{LsqFit.LsqFitResult}(undef, length(dataFiles))
+	for (df, initialValues, i) in zip(dfs, initialParams, 1:length(dataFiles))
+		if ncol(df) > 5
+			# If the dataset has more than 5 columns, it means it has
+			# replicate Y values, so we weight the fit by their stddev.
+			fits[i] = curve_fit(bindingModels[chosenModel],
+						df.concentration,
+						df.mean,
+						df.std,
+						initialValues)
+		else
+			# If the dataset has only 5 columns, it means it doesn't have
+			# replicate Y values, so we don't weight the fit by their stddev.
+			fits[i] = curve_fit(bindingModels[chosenModel],
+						df.concentration,
+						df.mean,
+						initialValues)
+		end
+	end
+	fits
+end
 
 # ╔═╡ 264bf9ec-6af5-11eb-1ffd-79fb3466f596
 begin
