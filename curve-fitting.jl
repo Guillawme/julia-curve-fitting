@@ -149,12 +149,9 @@ function loadData(dataFile)
 	df = @chain dataFile begin
 		CSV.File(footerskip=2)
 		DataFrame()
-		transform(
-			# Rename column 1, so we can always call it by the
-			# same name regardless of its name in the input file.
-			1 => :concentration,
-			copycols = false
-		)
+		# Rename column 1, so we can always call it by the
+		# same name regardless of its name in the input file.
+		rename(1 => :concentration)
 		@aside cols = ncol(_)
 		transform(
 			# Calculate mean and stddev of replicates
