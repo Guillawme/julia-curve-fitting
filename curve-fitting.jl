@@ -141,11 +141,11 @@ md"### Data processing"
 
 # ╔═╡ 992c86a2-6b13-11eb-1e00-95bdff2736d0
 md"""
-The `loadData()` function loads one data file, computes the mean and standard deviation of replicates, defines measurements as mean ± std, and returns a DataFrame containing all the data.
+The `processData()` function loads one data file, computes the mean and standard deviation of replicates, defines measurements as mean ± std, and returns a DataFrame containing all the data.
 """
 
 # ╔═╡ 1fe4d112-6a11-11eb-37a6-bf95fbe032b1
-function loadData(dataFile)
+function processData(dataFile::String)
 	df = @chain dataFile begin
 		CSV.File(footerskip=2)
 		DataFrame()
@@ -169,8 +169,36 @@ function loadData(dataFile)
 	return df
 end
 
+# ╔═╡ 247c2416-6c67-11eb-01df-8dac01cdbf8f
+md"""
+This functions should also work if passed an already loaded data frame (for example, if the user wants to load data and pre-process it in a different way before averaging replicates):
+"""
+
+# ╔═╡ 36ebe112-6c66-11eb-11f0-7fdb946865e4
+function processData(data::DataFrame)
+	df = @chain data begin
+		# Rename column 1, so we can always call it by the
+		# same name regardless of its name in the input file.
+		rename(1 => :concentration)
+		@aside cols = ncol(_)
+		transform(
+			# Calculate mean and stddev of replicates
+			# (all columns in input except first one).
+			AsTable(2:cols) => ByRow(mean) => :mean,
+			AsTable(2:cols) => ByRow(std) => :std
+		)
+		transform(
+			# Mean and stddev together define a measurement
+			# (this is only for plotting; fitting uses the two
+			# original columns separately).
+			[:mean, :std] => ByRow(measurement) => :measurement
+		)
+	end
+	return df
+end
+
 # ╔═╡ d904fd76-6af1-11eb-2352-837e03072137
-dfs = [ loadData(df) for df in dataFiles ]
+dfs = [ processData(df) for df in dataFiles ]
 
 # ╔═╡ 8e105fae-6aec-11eb-1471-83aebb776241
 md"### Plotting"
@@ -512,6 +540,8 @@ end
 # ╟─1884912a-6aeb-11eb-2b4a-d14d4a321dc5
 # ╟─992c86a2-6b13-11eb-1e00-95bdff2736d0
 # ╠═1fe4d112-6a11-11eb-37a6-bf95fbe032b1
+# ╟─247c2416-6c67-11eb-01df-8dac01cdbf8f
+# ╠═36ebe112-6c66-11eb-11f0-7fdb946865e4
 # ╟─8e105fae-6aec-11eb-1471-83aebb776241
 # ╟─97c5020c-6aec-11eb-024b-513b1e603d98
 # ╠═caf4a4a2-6aec-11eb-2765-49d67afa47dd
