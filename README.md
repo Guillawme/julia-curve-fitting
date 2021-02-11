@@ -28,4 +28,6 @@ pkg> instantiate # this command is only needed the first time
 julia> using Pluto
 julia> Pluto.run()
 ```
-
+Then, from the Pluto start page, enter the path to the notebook in the text box
+to run the notebook. Next time, the notebook will be listed as recently open
+and a link to open it directly will be displayed below the text box.
