@@ -231,7 +231,7 @@ function initResidualPlot()
 end
 
 # ╔═╡ 7f83b838-6a11-11eb-3652-bdff24f3473e
-function plotOneResiduals(plt, df, fit, filePath)
+function plotOneResiduals!(plt, df, fit, filePath)
 	title = split(filePath, "/")[end]
 	scatter!(
 		plt,
@@ -312,7 +312,7 @@ bindingModels = Dict(
 )
 
 # ╔═╡ 7c03fcbe-6a11-11eb-1b7b-cbad863156a6
-function plotOneDataset(plt, df, fit, filePath, showInitial = false, initialValues = nothing)
+function plotOneDataset!(plt, df, fit, filePath, showInitial = false, initialValues = nothing)
 	title = split(filePath, "/")[end]
 	scatter!(
 		plt,
@@ -418,7 +418,7 @@ end
 begin
 	dataPlot = initMainPlot()
 	for (df, fit, title, initialVals) in zip(dfs, fits, dataFiles, initialParams)
-		plotOneDataset(dataPlot, df, fit, title, showInitialFit, initialVals)
+		plotOneDataset!(dataPlot, df, fit, title, showInitialFit, initialVals)
 	end
 	dataPlot
 end
@@ -427,7 +427,7 @@ end
 begin
 	residualPlot = initResidualPlot()
 	for (df, fit, title) in zip(dfs, fits, dataFiles)
-		plotOneResiduals(residualPlot, df, fit, title)
+		plotOneResiduals!(residualPlot, df, fit, title)
 	end
 	residualPlot
 end
@@ -525,7 +525,7 @@ end
 # ╟─3da83f72-6a11-11eb-1a74-49b66eb39c96
 # ╟─d15cba72-6aeb-11eb-2c80-65702b48e859
 # ╟─01b59d8a-6637-11eb-0da0-8d3e314e23af
-# ╟─264bf9ec-6af5-11eb-1ffd-79fb3466f596
+# ╠═264bf9ec-6af5-11eb-1ffd-79fb3466f596
 # ╟─4f4000b4-6b2c-11eb-015f-d76a0adda0a0
 # ╟─c50cf18c-6b11-11eb-07d3-0b8e332ec5bc
 # ╠═a951b5dc-6af7-11eb-2401-5d11a14e3067
