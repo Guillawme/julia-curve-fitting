@@ -465,7 +465,7 @@ paramsStdErrors = stderror.(fits)
 # ╔═╡ 090347fc-6b8e-11eb-0e17-9d9d45749c0b
 PlutoUI.with_terminal() do
 	if length(initialParams[1]) == 3
-		# No Hill coefficient to report
+		# No Hill coefficient to report.
 		println("Dataset\t\t\t\tKd\t\t\t\tSmin\t\t\tSmax")
 		for (dataset, fit, stderr) in zip(dataFiles, fits, paramsStdErrors)
 			println(
@@ -485,7 +485,7 @@ PlutoUI.with_terminal() do
 			)
 		end
 	elseif length(initialParams[1]) == 4
-		# There is a Hill coefficient to report
+		# There is a Hill coefficient to report.
 		println("Dataset\t\t\t\tKd\t\t\t\tSmin\t\t\tSmax\t\t\th")
 		for (dataset, fit, stderr) in zip(dataFiles, fits, paramsStdErrors)
 			println(
@@ -509,8 +509,8 @@ PlutoUI.with_terminal() do
 			)
 		end
 	else
-		# Other number of values in  make no sense
-				println("Error.")
+		# Other number of values in the parameters array make no sense.
+		println("Error.")
 	end
 end
 
@@ -528,7 +528,7 @@ end
 # ╟─264bf9ec-6af5-11eb-1ffd-79fb3466f596
 # ╟─4f4000b4-6b2c-11eb-015f-d76a0adda0a0
 # ╟─c50cf18c-6b11-11eb-07d3-0b8e332ec5bc
-# ╟─a951b5dc-6af7-11eb-2401-5d11a14e3067
+# ╠═a951b5dc-6af7-11eb-2401-5d11a14e3067
 # ╟─be17b97e-663a-11eb-2158-a381c19ece3f
 # ╟─090347fc-6b8e-11eb-0e17-9d9d45749c0b
 # ╟─124c4f94-6b99-11eb-2921-d7c2cd00b893
