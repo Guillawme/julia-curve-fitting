@@ -93,7 +93,7 @@ $@bind showInitialFit PlutoUI.CheckBox(default = false)
 md"""
 For the quadratic model, indicate receptor concentration (the receptor is the binding partner kept at constant, low concentration across the titration series).
 Parameter $R_0 =$
-$@bind R0 PlutoUI.Slider(0.01:0.1:100.0, default = 5.0, show_value = true)
+$@bind R0 PlutoUI.Slider(0.01:0.1:500.0, default = 5.0, show_value = true)
 """
 
 # ╔═╡ 4f4000b4-6b2c-11eb-015f-d76a0adda0a0
@@ -525,10 +525,10 @@ end
 # ╟─3da83f72-6a11-11eb-1a74-49b66eb39c96
 # ╟─d15cba72-6aeb-11eb-2c80-65702b48e859
 # ╟─01b59d8a-6637-11eb-0da0-8d3e314e23af
-# ╠═264bf9ec-6af5-11eb-1ffd-79fb3466f596
+# ╟─264bf9ec-6af5-11eb-1ffd-79fb3466f596
 # ╟─4f4000b4-6b2c-11eb-015f-d76a0adda0a0
 # ╟─c50cf18c-6b11-11eb-07d3-0b8e332ec5bc
-# ╠═a951b5dc-6af7-11eb-2401-5d11a14e3067
+# ╟─a951b5dc-6af7-11eb-2401-5d11a14e3067
 # ╟─be17b97e-663a-11eb-2158-a381c19ece3f
 # ╟─090347fc-6b8e-11eb-0e17-9d9d45749c0b
 # ╟─124c4f94-6b99-11eb-2921-d7c2cd00b893
