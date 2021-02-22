@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.20
+# v0.12.21
 
 using Markdown
 using InteractiveUtils
@@ -404,7 +404,7 @@ begin
 						initialValues)
 		else
 			# If the dataset has only 5 columns, it means it doesn't have
-			# replicate Y values, so we don't weight the fit by their stddev.
+			# replicate Y values, so there are no stddev we can use as weights.
 			fits[i] = curve_fit(bindingModels[chosenModel],
 						df.concentration,
 						df.mean,
