@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.21
+# v0.14.1
 
 using Markdown
 using InteractiveUtils
@@ -217,7 +217,7 @@ function initMainPlot()
 end
 
 # ╔═╡ fc194672-6aed-11eb-0a06-2d967ec094b1
-md"The `initResidualPlot()` function initializes a plot, the `plotOneResiduals()` function plots the fit residuals from one dataset (call it repeatedly to plot more datasets on the same axes)."
+md"The `initResidualPlot()` function initializes a plot, the `plotOneResiduals!()` function plots the fit residuals from one dataset (call it repeatedly to plot more datasets on the same axes)."
 
 # ╔═╡ 14db987c-6aee-11eb-06cf-a11987b98f1e
 function initResidualPlot()
@@ -237,6 +237,30 @@ function plotOneResiduals!(plt, df, fit, filePath)
 		plt,
 		df.concentration,
 		fit.resid,
+		label = "$title: $chosenModel fit residual"
+	)
+end
+
+# ╔═╡ 9020fa5d-7408-4161-a52f-df37b3c2e6f5
+md"The `initResidualHistogram()` function initializes a histogram, the `plotOneResidualsHistogram!()` function plots a histogram of the fit residuals from one dataset (call it repeatedly to plot more datasets on the same axes)."
+
+# ╔═╡ 3184d209-1cc9-40ed-a9ec-9f094c5c94b5
+function initResidualHistogram()
+	histogram(
+		xlabel = "Fit residual",
+		ylabel = "Frequency",
+		legend = :topleft
+	)
+	vline!([0], label = nothing, color = :red)
+end
+
+# ╔═╡ b38cd229-64e2-4ca4-a78b-8881ec166b09
+function plotOneResidualsHistogram!(plt, df, fit, filePath)
+	title = split(filePath, "/")[end]
+	histogram!(
+		plt,
+		fit.resid,
+		bins = length(fit.resid),
 		label = "$title: $chosenModel fit residual"
 	)
 end
@@ -432,6 +456,15 @@ begin
 	residualPlot
 end
 
+# ╔═╡ 7625d41a-dab1-4b10-947c-3667c03f85aa
+begin
+	residualHistogram = initResidualHistogram()
+	for (df, fit, title) in zip(dfs, fits, dataFiles)
+		plotOneResidualsHistogram!(residualHistogram, df, fit, title)
+	end
+	residualHistogram
+end
+
 # ╔═╡ 2109f516-6b99-11eb-05a0-99b9ecfd0f9d
 PlutoUI.with_terminal() do
 	println("Dataset\t\t\t\tSum of squared residuals")
@@ -529,6 +562,7 @@ end
 # ╟─4f4000b4-6b2c-11eb-015f-d76a0adda0a0
 # ╟─c50cf18c-6b11-11eb-07d3-0b8e332ec5bc
 # ╟─a951b5dc-6af7-11eb-2401-5d11a14e3067
+# ╟─7625d41a-dab1-4b10-947c-3667c03f85aa
 # ╟─be17b97e-663a-11eb-2158-a381c19ece3f
 # ╟─090347fc-6b8e-11eb-0e17-9d9d45749c0b
 # ╟─124c4f94-6b99-11eb-2921-d7c2cd00b893
@@ -549,6 +583,9 @@ end
 # ╟─fc194672-6aed-11eb-0a06-2d967ec094b1
 # ╠═14db987c-6aee-11eb-06cf-a11987b98f1e
 # ╠═7f83b838-6a11-11eb-3652-bdff24f3473e
+# ╟─9020fa5d-7408-4161-a52f-df37b3c2e6f5
+# ╠═3184d209-1cc9-40ed-a9ec-9f094c5c94b5
+# ╠═b38cd229-64e2-4ca4-a78b-8881ec166b09
 # ╟─663a4cae-658a-11eb-382f-cf256c08c9d1
 # ╟─594e7534-6aeb-11eb-1254-3b92b71877ed
 # ╟─32dce844-6aee-11eb-3cf2-3ba420d311d3
