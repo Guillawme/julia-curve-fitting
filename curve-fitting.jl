@@ -267,7 +267,7 @@ We will need to keep track of dataset names. You can edit them here if you want 
 md"### Plotting"
 
 # ╔═╡ 97c5020c-6aec-11eb-024b-513b1e603d98
-md"The `initMainPlot()` function initializes a plot, the `plotOneDataset()` function plots one dataset (call it repeatedly to plot more datasets on the same axes)."
+md"The `initMainPlot()` function initializes a plot, the `plotOneDataset!()` function plots one dataset (call it repeatedly to plot more datasets on the same axes)."
 
 # ╔═╡ caf4a4a2-6aec-11eb-2765-49d67afa47dd
 function initMainPlot()
