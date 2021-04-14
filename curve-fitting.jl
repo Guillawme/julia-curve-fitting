@@ -24,6 +24,8 @@ begin
 	using Plots
 	using PlutoUI
 	using Statistics
+	using Unitful
+	using UnitfulRecipes
 	using URIs
 end
 
@@ -68,9 +70,23 @@ md"""
 **Number of rows to ignore at the end of files:** $(@bind footerRows PlutoUI.NumberField(0:30, default = 2))
 """
 
+# ╔═╡ 77316a92-425a-4902-9828-52a7c4a74f27
+md"""
+**Unit of your concentration values ($X$ axis):** $(
+@bind chosenConcUnit PlutoUI.Select(
+	[
+		"pM" => "pM",
+		"nM" => "nM",
+		"μM" => "μM",
+		"mM" => "mM"
+	],
+	default = "nM"
+))
+"""
+
 # ╔═╡ 214acce6-6ae8-11eb-3abf-492e50140317
 md"""
-Your data should appear below shortly, check that it looks normal. In addition to the columns present in your CSV file, you should see three columns named `mean`, `std` and `measurement` (these values will be used for fitting and plotting).
+Your data should appear below shortly, check that it looks normal. In addition to the columns present in your CSV file, you should see four columns named `mean`, `std`, `measurement` and `conc` (these values will be used for fitting and plotting).
 """
 
 # ╔═╡ d5b0e2a1-865c-489c-9d0d-c4ae043828fb
@@ -146,6 +162,8 @@ md"""
 ## Numerical results
 
 ### Model parameters
+
+The parameter $K_D$ is in unit of $(chosenConcUnit).
 """
 
 # ╔═╡ 124c4f94-6b99-11eb-2921-d7c2cd00b893
@@ -168,6 +186,65 @@ PlutoUI.TableOfContents()
 
 # ╔═╡ 1884912a-6aeb-11eb-2b4a-d14d4a321dc5
 md"### Data processing"
+
+# ╔═╡ c94ef72d-bd12-4434-935e-01e94d5a4588
+md"""
+#### Concentration unit selection
+"""
+
+# ╔═╡ 54272681-dfeb-4034-b127-7e68c19fd576
+md"""
+First, we need an alias of M (molar) for mol/L, since this is the notation most widely used in the field:
+"""
+
+# ╔═╡ 731492c6-95c7-449f-8c19-53e22ab438b8
+begin
+	Unitful.register(@__MODULE__)
+	@unit M "M" Molar 1u"mol/L" true
+end
+
+# ╔═╡ 93ef0431-643b-4f6f-8c09-beabff59e0c6
+md"""
+Check that our alias works:
+"""
+
+# ╔═╡ 1c10231d-3bea-4468-a2d8-886c05c6474c
+typeof(M)
+
+# ╔═╡ 730b693d-cca8-46de-8382-c151b5f63352
+1u"nM" == 1u"nmol/l"
+
+# ╔═╡ 24152a84-523b-4027-9b5a-7e3524b9c659
+dimension(1u"nM") == dimension(1u"mol/l")
+
+# ╔═╡ 97f73ee4-3db7-43ba-93eb-17025b485f4f
+md"""
+This dictionary maps dropdown menu options (in section [Load data](#270cc0cc-660f-11eb-241e-b75746a39cc7) above) to their corresponding unit:
+"""
+
+# ╔═╡ 8f2d959e-5e61-48a9-bbf0-538bc1d478a8
+concUnits = Dict(
+	"pM" => u"pM",
+	"nM" => u"nM",
+	"μM" => u"μM",
+	"mM" => u"mM"
+)
+
+# ╔═╡ c866d213-4680-4b08-8ecc-1faefc8661a4
+md"""
+The following cells simply check which unit is selected in section [Load data](#008f4f8c-9d21-11eb-0fea-f3b2e58957d1) above.
+"""
+
+# ╔═╡ 8e9cd30f-1722-4f2f-a26b-2f558805d4a1
+chosenConcUnit
+
+# ╔═╡ 13417555-be95-4662-ad11-eca4dece81b5
+concUnits[chosenConcUnit]
+
+# ╔═╡ 9c7e922e-c82f-41a4-9513-4462a0559c3f
+md"""
+#### Processing
+"""
 
 # ╔═╡ 4f4b580d-507c-4ad0-b1d5-5967c8ed829e
 md"""
@@ -192,6 +269,11 @@ function commonProcessing(data::DataFrame)
 			# (this is only for plotting; fitting uses the two
 			# original columns separately).
 			[:mean, :std] => ByRow(measurement) => :measurement
+		)
+		transform(
+			# Assign unit to concentration column, store as
+			# a new column callec conc (only for plotting).
+			:concentration => ByRow(x -> x * concUnits[chosenConcUnit]) => :conc
 		)
 	end
 	return df
@@ -298,7 +380,7 @@ function plotOneResiduals!(plt, df, fit, filePath)
 	title = split(filePath, "/")[end]
 	scatter!(
 		plt,
-		df.concentration,
+		df.conc,
 		fit.resid,
 		label = "$title: $chosenModel fit residual"
 	)
@@ -403,21 +485,21 @@ function plotOneDataset!(plt, df, fit, filePath, showInitial = false, initialVal
 	title = split(filePath, "/")[end]
 	scatter!(
 		plt,
-		df.concentration,
+		df.conc,
 		df.measurement,
 		label = "$title: data"
 	)
 	if showInitial
 		plot!(
 			plt,
-			df.concentration,
+			df.conc,
 			bindingModels[chosenModel](df.concentration, initialValues),
 			label = "$title: $chosenModel fit (initial)",
 			color = :grey
 		)
 		plot!(
 			plt,
-			df.concentration,
+			df.conc,
 			bindingModels[chosenModel](df.concentration, fit.param),
 			label = "$title: $chosenModel fit (converged)",
 			color = :red
@@ -425,7 +507,7 @@ function plotOneDataset!(plt, df, fit, filePath, showInitial = false, initialVal
 	else
 		plot!(
 			plt,
-			df.concentration,
+			df.conc,
 			bindingModels[chosenModel](df.concentration, fit.param),
 			label = "$title: $chosenModel fit",
 			color = :red
@@ -616,6 +698,7 @@ end
 # ╠═a2c02fcf-9402-4938-bc3d-819b45a66afa
 # ╠═14baf100-660f-11eb-1380-ebf4a860eed8
 # ╟─2ce72e97-0133-4f15-bf1d-7fd04ccf3102
+# ╟─77316a92-425a-4902-9828-52a7c4a74f27
 # ╟─214acce6-6ae8-11eb-3abf-492e50140317
 # ╟─d904fd76-6af1-11eb-2352-837e03072137
 # ╟─0e8af3be-7ae7-4ec2-8d7a-670878cd52ee
@@ -641,6 +724,19 @@ end
 # ╠═393b2f5e-6556-11eb-2119-cf7309ee7392
 # ╠═abc03f64-6a11-11eb-0319-ed7cea455cb5
 # ╟─1884912a-6aeb-11eb-2b4a-d14d4a321dc5
+# ╟─c94ef72d-bd12-4434-935e-01e94d5a4588
+# ╟─54272681-dfeb-4034-b127-7e68c19fd576
+# ╠═731492c6-95c7-449f-8c19-53e22ab438b8
+# ╟─93ef0431-643b-4f6f-8c09-beabff59e0c6
+# ╠═1c10231d-3bea-4468-a2d8-886c05c6474c
+# ╠═730b693d-cca8-46de-8382-c151b5f63352
+# ╠═24152a84-523b-4027-9b5a-7e3524b9c659
+# ╟─97f73ee4-3db7-43ba-93eb-17025b485f4f
+# ╠═8f2d959e-5e61-48a9-bbf0-538bc1d478a8
+# ╟─c866d213-4680-4b08-8ecc-1faefc8661a4
+# ╠═8e9cd30f-1722-4f2f-a26b-2f558805d4a1
+# ╠═13417555-be95-4662-ad11-eca4dece81b5
+# ╟─9c7e922e-c82f-41a4-9513-4462a0559c3f
 # ╟─4f4b580d-507c-4ad0-b1d5-5967c8ed829e
 # ╠═5eb607c7-172b-4a6c-a815-acbc195108f0
 # ╟─992c86a2-6b13-11eb-1e00-95bdff2736d0

@@ -96,6 +96,12 @@ version = "3.27.0"
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 
+[[ConstructionBase]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "48920211c95a6da1914a06c44ec94be70e84ffff"
+uuid = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
+version = "1.1.0"
+
 [[Contour]]
 deps = ["StaticArrays"]
 git-tree-sha1 = "9f02045d934dc030edad45944ea80dbd1f0ebea7"
@@ -812,6 +818,18 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
+
+[[Unitful]]
+deps = ["ConstructionBase", "Dates", "LinearAlgebra", "Random"]
+git-tree-sha1 = "c6bbc170505c5ea36593a0072b61d3be8bf868ae"
+uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
+version = "1.7.0"
+
+[[UnitfulRecipes]]
+deps = ["RecipesBase", "Unitful"]
+git-tree-sha1 = "a934a38584f9e5dee8f339c29f40fa64a9bebed1"
+uuid = "42071c24-d89e-48dd-8a24-8a12d9b8861f"
+version = "1.2.0"
 
 [[Wayland_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
