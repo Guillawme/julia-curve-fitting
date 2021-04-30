@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.2
+# v0.14.4
 
 using Markdown
 using InteractiveUtils
@@ -65,7 +65,7 @@ The function below defines this binding model in code:
 
 # ╔═╡ 1eed6126-331b-4218-acc7-8b7c132ef355
 function quadratic(Ltot)
-	( (kd + Rtot + Ltot) - sqrt((-(kd + Rtot + Ltot)) ^ 2 - 4 * Rtot * Ltot) ) / (2 * Rtot)
+	( (kd + Rtot + Ltot) - sqrt((- kd - Rtot - Ltot) ^ 2 - 4 * Rtot * Ltot) ) / (2 * Rtot)
 end
 
 # ╔═╡ 3794717b-1f61-4622-9a55-ad86ab947831

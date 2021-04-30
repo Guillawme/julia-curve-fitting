@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.2
+# v0.14.4
 
 using Markdown
 using InteractiveUtils
@@ -471,7 +471,7 @@ In principle, $R_{tot}$ could be left as a free parameter to be determined by th
 """
 
 # ╔═╡ 5694f1da-6636-11eb-0fed-9fee5c48b114
-@. quadratic(conc, p) = p[1] + (p[2] - p[1]) * ( (p[3] + R0 + conc) - sqrt((-(p[3] + R0 + conc)) ^ 2 - 4 * R0 * conc) ) / (2 * R0)
+@. quadratic(conc, p) = p[1] + (p[2] - p[1]) * ( (p[3] + R0 + conc) - sqrt((- p[3] - R0 - conc) ^ 2 - 4 * R0 * conc) ) / (2 * R0)
 
 # ╔═╡ 605f06ae-6a11-11eb-0b2f-eb81f6526829
 bindingModels = Dict(
