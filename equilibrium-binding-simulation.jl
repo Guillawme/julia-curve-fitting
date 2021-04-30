@@ -15,8 +15,10 @@ end
 
 # ╔═╡ b6ff5052-04ec-11eb-043b-458c42b19edb
 begin
+	using Distributions
 	using Plots
 	using PlutoUI
+	using Random
 end
 
 # ╔═╡ 87c1dc3b-d361-4f46-a68a-c28d7c7de0c3
@@ -51,7 +53,19 @@ Dilution factor between titration points: $(@bind dilution PlutoUI.NumberField(1
 Number of titration points: $(@bind points PlutoUI.NumberField(1:1:24, default = 15))
 
 Concentration of receptor $R_{tot}$: $(@bind Rtot PlutoUI.Slider(0.001:1.0:50.0, default = 1.0, show_value = true))
+
+Simulate random, normally distributed noise? $(@bind simulateNoise PlutoUI.CheckBox(default = false))
 """
+
+# ╔═╡ b05df20b-353e-462d-aa13-534862f8f6cd
+if simulateNoise
+	md"""
+	Mean (μ) and standard deviation (σ)
+
+	μ = $(@bind μ PlutoUI.NumberField(-3.0:0.1:3.0, default = 0.0))
+	σ = $(@bind σ PlutoUI.NumberField(0.0:0.001:0.1, default = 0.001))
+	"""
+end
 
 # ╔═╡ d49dee36-c12d-4206-9699-a181570caa80
 md"""
@@ -59,6 +73,13 @@ Ratio $\frac{L_{max}}{K_D} =$ $(lmax / kd)
 
 Ratio $\frac{K_D}{R_{tot}} =$ $(kd / Rtot)
 """
+
+# ╔═╡ 915b2a49-cb32-40a0-bfae-21380144ed3a
+if simulateNoise
+	md"""
+	Signal-to-noise ratio $\frac{S}{σ} =$ $(1.0 / σ)
+	"""
+end
 
 # ╔═╡ 3954adfa-73cc-495a-93c1-bcde87a60ce8
 md"""
@@ -111,7 +132,12 @@ The code below uses the quadratic model to calculate fractional saturation of th
 """
 
 # ╔═╡ 82af41ba-d9b9-4ce2-8736-6fe32c8e024e
-y = quadratic.(x)
+if simulateNoise
+	noise = rand(Normal(μ, σ), points)
+	y = quadratic.(x) .+ noise
+else
+	y = quadratic.(x)
+end
 
 # ╔═╡ efc70ae1-abcc-472d-8df8-c55cbbd6529b
 begin
@@ -128,19 +154,21 @@ begin
 	hline!([0.0], color = :black)
 end
 
-# ╔═╡ b0340ca3-02d5-49a9-841b-7827e4aee2bb
-PlutoUI.TableOfContents()
-
 # ╔═╡ 9c5021f3-67ab-464d-8f22-25e269c36083
 md"""
 ## Required packages
 """
 
+# ╔═╡ b0340ca3-02d5-49a9-841b-7827e4aee2bb
+PlutoUI.TableOfContents()
+
 # ╔═╡ Cell order:
 # ╟─87c1dc3b-d361-4f46-a68a-c28d7c7de0c3
 # ╟─d50721c7-34e4-411d-ae6b-dc6196b0f5a9
 # ╟─c4d66e7a-38e4-497d-b680-8c50c51fe146
+# ╟─b05df20b-353e-462d-aa13-534862f8f6cd
 # ╟─d49dee36-c12d-4206-9699-a181570caa80
+# ╟─915b2a49-cb32-40a0-bfae-21380144ed3a
 # ╟─efc70ae1-abcc-472d-8df8-c55cbbd6529b
 # ╟─3954adfa-73cc-495a-93c1-bcde87a60ce8
 # ╠═4d816572-03a3-481c-a29c-522f0535a679
