@@ -6,7 +6,7 @@ FILES = \
 	build-sysimg.jl \
 	makefile
 
-.PHONY: all sysimg.dylib
+.PHONY: all 
 
 all: sysimg.dylib
 
