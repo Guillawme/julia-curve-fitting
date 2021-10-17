@@ -59,14 +59,14 @@ Indicate below which data files to process:
 
 # ╔═╡ a2c02fcf-9402-4938-bc3d-819b45a66afa
 dataURLs = [
-	#"https://raw.githubusercontent.com/Guillawme/julia-curve-fitting/main/datasets/dataset_010.csv",
-	#"https://raw.githubusercontent.com/Guillawme/julia-curve-fitting/main/datasets/dataset_011.csv"
+	"https://raw.githubusercontent.com/Guillawme/julia-curve-fitting/main/datasets/dataset_006.csv",
+	"https://raw.githubusercontent.com/Guillawme/julia-curve-fitting/main/datasets/dataset_007.csv"
 ]
 
 # ╔═╡ 14baf100-660f-11eb-1380-ebf4a860eed8
 dataFiles = [
-	"datasets/dataset_003.csv",
-	"datasets/dataset_005.csv"
+	"datasets/dataset_008.csv",
+	"datasets/dataset_009.csv"
 ]
 
 # ╔═╡ 2ce72e97-0133-4f15-bf1d-7fd04ccf3102
