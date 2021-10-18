@@ -16,6 +16,14 @@ The CSV files in the repository's `datasets` directory have been reformatted to
 be easy to read into a `DataFrame`. Original files can be downloaded at
 <https://doi.org/10.5281/zenodo.3519435>
 
+## Notebook previews
+
+An HTML export of the notebooks in this repository is available, if you would
+like to read the notebook without needing to run it:
+
+- [curve-fitting.jl](https://guillawme.github.io/julia-curve-fitting/curve-fitting.jl.html)
+- [equilibrium-binding-simulation.jl](https://guillawme.github.io/julia-curve-fitting/equilibrium-binding-simulation.jl.html)
+
 ## How to use
 
 To use this notebook, clone the repository, navigate into it, start Julia and
