@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.16.1
+# v0.17.2
 
 using Markdown
 using InteractiveUtils
@@ -7,8 +7,9 @@ using InteractiveUtils
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
     quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
         local el = $(esc(element))
-        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
         el
     end
 end
@@ -291,8 +292,7 @@ The `processData()` function loads one data file, computes the mean and standard
 # ╔═╡ 1fe4d112-6a11-11eb-37a6-bf95fbe032b1
 function processData(dataFile::String)
 	df = @chain dataFile begin
-		CSV.File(footerskip=footerRows)
-		DataFrame()
+		CSV.read(footerskip=footerRows, DataFrame)
 		commonProcessing()
 	end
 	return df
@@ -307,8 +307,7 @@ This functions should also work if passed an URL to a remote file:
 function processData(dataFile::URI)
 	df = @chain dataFile begin
 		HTTP.get(_).body
-		CSV.File(footerskip=footerRows)
-		DataFrame()
+		CSV.read(footerskip=footerRows, DataFrame)
 		commonProcessing()
 	end
 	return df
