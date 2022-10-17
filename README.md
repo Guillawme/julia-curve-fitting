@@ -27,15 +27,13 @@ like to read the notebook without needing to run it:
 ## How to use
 
 To use this notebook, clone the repository, navigate into it, start Julia and
-run the following commands (type `]` to get to the `pkg>` prompt, `backspace` at
-an empty `pkg>` prompt to get back to the `julia>` prompt):
+run the following commands: 
 
 ``` julialang
-pkg> activate .
-pkg> instantiate # this command is only needed the first time
 julia> using Pluto
 julia> Pluto.run()
 ```
 Then, from the Pluto start page, enter the path to the notebook in the text box
 to run the notebook. Next time, the notebook will be listed as recently open
 and a link to open it directly will be displayed below the text box.
+
